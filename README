@@ -117,3 +117,30 @@ $ java -jar eclipse_remote_control.jar execute_command [run configuration name] 
 
 Example:
 $ java -jar eclipse_remote_control.jar execute_command my_ant_config DEBUG
+
+---------------------------------------------------------------------
+Commands - Remote Debugging
+
+This command is used to execute remote-debug run configurations.
+
+You have to specify the name of the executed run configuration.
+
+As an optional argument you can pass the remote-port and the remote-host to
+connect to. This overrides the defaults of the run configuration.
+
+Running this command terminates any previous by eclipse_remote_control
+launched remote-debug-sessions. It copies the given run configuration
+and changes host and port. After running the remote debugger the
+debug-perspective is shown if this configured in Preferences->Run/Debug->Perspectives.
+After starting successfully or waiting for passing the launch-timeout
+the client returns. Upon error a message is print to stderr and the
+exit code is not 0 (1 for common errors and 2 for "connecting-to-eclipse"
+errors). After terminating the debug-session the previously created
+copy of the initial run configuration is removed.
+
+Syntax:
+$ java -jar eclipse_remote_control.jar remotedebug_command [run configuration name] <remote port> <remote host>
+
+Examples:
+$ java -jar eclipse_remote_control.jar remotedebug_command my_remotedebugging_config
+$ java -jar eclipse_remote_control.jar remotedebug_command my_remotedebugging_config 4711 myserver.com

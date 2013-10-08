@@ -20,8 +20,10 @@
 package com.github.marook.eclipse_remote_control.client;
 
 import java.io.IOException;
+import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.PrintStream;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.util.Arrays;
 
@@ -29,17 +31,22 @@ import com.github.marook.eclipse_remote_control.client.parser.CommandParseExcept
 import com.github.marook.eclipse_remote_control.client.parser.CommandParser;
 import com.github.marook.eclipse_remote_control.client.parser.ExecuteCommandParser;
 import com.github.marook.eclipse_remote_control.client.parser.OpenFileCommandParser;
+import com.github.marook.eclipse_remote_control.client.parser.RemoteDebugParser;
 import com.github.marook.eclipse_remote_control.command.command.Command;
 import com.github.marook.eclipse_remote_control.command.command.ExternalToolsCommand;
 import com.github.marook.eclipse_remote_control.command.command.OpenFileCommand;
 import com.github.marook.eclipse_remote_control.command.serialize.ICommandEncoder;
+import com.github.marook.eclipse_remote_control.command.serialize.impl.serialize.SerializeCommandDecoder;
 import com.github.marook.eclipse_remote_control.command.serialize.impl.serialize.SerializeCommandEncoder;
 
 public class Client {
 	
+	private static final int PORT = 53343;
+	
 	private CommandParser[] PARSERS = new CommandParser[]{
 		new OpenFileCommandParser(),
-		new ExecuteCommandParser()
+		new ExecuteCommandParser(),
+		new RemoteDebugParser()
 	};
 
 	private void printUsage(final PrintStream out){
@@ -53,23 +60,38 @@ public class Client {
 		}
 	}
 	
-	public void fireCmd(final Command cmd) throws IOException{
-		fireCommand(cmd);
+	public boolean fireCmd(final Command cmd) throws IOException{
+		return fireCommand(cmd);
 	}
 
 	/**
 	 * @deprecated Instantiate Client and run fireCmd instead.
 	 */
-	public static void fireCommand(final Command cmd) throws IOException{
-		final Socket s = new Socket("localhost", 53343);
+	public static boolean fireCommand(final Command cmd) throws IOException{
+		final Socket s = new Socket("localhost", PORT);
 			
 		final ICommandEncoder ce = new SerializeCommandEncoder();
 		final ObjectOutput cmdEncoder = ce.createEncoder(s.getOutputStream());
 		cmdEncoder.writeObject(cmd);
-			
 		cmdEncoder.flush();
-			
-		cmdEncoder.close();
+		
+		SerializeCommandDecoder decoder = new SerializeCommandDecoder();
+		ObjectInput in = decoder.createDecoder(s.getInputStream());
+		boolean hasMsg = in.readBoolean();
+		String msg = null;
+		if (hasMsg) {
+			msg = in.readUTF();
+		}
+				
+		boolean success = true;
+		if (msg != null) {
+			System.err.println(msg);
+			success = false;
+		}
+
+		s.close();
+		
+		return success;
 	}
 	
 	private static void handleCommandRunError(final String[] args, final Exception e){
@@ -92,7 +114,6 @@ public class Client {
 				continue;
 			}
 			
-			
 			final Command cmd;
 			try{ 
 				cmd = parser.parseCommand(args);
@@ -106,14 +127,24 @@ public class Client {
 				return;
 			}
 			
-			try{
-				fireCmd(cmd);
+			boolean success = false;
+			try {
+				success = fireCmd(cmd);
+			}
+			catch(final ConnectException e) {
+				System.err.println("Could not connect to Eclipse on 'localhost:" + PORT + "'! "
+						+ "Maybe plugin is not installed or Eclipse is not running.");
+				System.exit(2);
 			}
 			catch(final Exception e){
 				handleCommandRunError(args, e);
 			}
 			
-			return;
+			if (!success) {
+				System.exit(1);
+			} else {
+				System.exit(0);
+			}
 		}
 		
 		// not command could be identified

@@ -21,6 +21,7 @@ package com.github.marook.eclipse_remote_control;
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,6 +33,8 @@ import com.github.marook.eclipse_remote_control.run.runner.impl.simple.SimpleCom
 public class CommandServerWorker extends Thread {
 	
 	private static final Logger LOGGER = Logger.getLogger(CommandServerWorker.class.getName());
+	
+	private boolean shutdown = false;
 	
 	private final ICommandDecoder commandDecoder =
 		new SerializeCommandDecoder();
@@ -48,20 +51,33 @@ public class CommandServerWorker extends Thread {
 	
 	@Override
 	public void run() {
+		Runtime.getRuntime().addShutdownHook(new ShutdownThread(this));
+		
 		try{
 			final ServerSocket server = new ServerSocket(53343);
+			server.setSoTimeout(250);
 			
 			LOGGER.log(Level.INFO, "Command server worker running.");
 			
-			while(true){
-				final Socket client = server.accept();
-				
-				launchClientWorker(client);
+			while (!shutdown) {
+				try {
+					final Socket client = server.accept();
+					launchClientWorker(client);
+				} catch (SocketTimeoutException e) {
+					// nothing to do
+				}
 			}
+			
+			server.close();
 		}
 		catch(final Exception e){
 			LOGGER.log(Level.SEVERE, "Command server aborted.", e);
 		}
+		
+	}
+	
+	public void shutdown() {
+		shutdown = true;
 	}
 	
 }

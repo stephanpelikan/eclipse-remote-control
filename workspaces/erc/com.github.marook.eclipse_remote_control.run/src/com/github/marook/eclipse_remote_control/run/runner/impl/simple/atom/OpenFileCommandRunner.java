@@ -68,7 +68,7 @@ public class OpenFileCommandRunner extends AbstractAtomCommandRunner {
 	}
 
 	@Override
-	protected void internalExecute(final Command cmd) throws Exception {
+	protected String internalExecute(final Command cmd) throws Exception {
 		final OpenFileCommand c = (OpenFileCommand) cmd;
 		
 		final IFile file = javaFileToPluginFile(c.getFileName());
@@ -88,7 +88,7 @@ public class OpenFileCommandRunner extends AbstractAtomCommandRunner {
 				}
 			});
 		    
-		    return;
+		    return null;
 		}
 		
 		// here comes the alternative approach: open file through EFS local fs 
@@ -113,6 +113,8 @@ public class OpenFileCommandRunner extends AbstractAtomCommandRunner {
 				}
 			}
 		});
+	    
+	    return null;
 	}
 
 	private IFile javaFileToPluginFile(String javaFile) {

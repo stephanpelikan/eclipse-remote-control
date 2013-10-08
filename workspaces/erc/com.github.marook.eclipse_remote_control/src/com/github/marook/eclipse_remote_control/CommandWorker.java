@@ -20,12 +20,14 @@
 package com.github.marook.eclipse_remote_control;
 
 import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.github.marook.eclipse_remote_control.command.command.Command;
 import com.github.marook.eclipse_remote_control.command.serialize.ICommandDecoder;
+import com.github.marook.eclipse_remote_control.command.serialize.impl.serialize.SerializeCommandEncoder;
 import com.github.marook.eclipse_remote_control.run.runner.ICommandRunner;
 
 public class CommandWorker extends Thread {
@@ -63,11 +65,26 @@ public class CommandWorker extends Thread {
 			final ObjectInput cmdIn =
 				commandDecoder.createDecoder(socket.getInputStream());
 			
-			while(true){
-				final Command cmd = (Command) cmdIn.readObject();
-				
-				commandRunner.execute(cmd);
+			final Command cmd = (Command) cmdIn.readObject();
+			
+			String msg;
+			try {
+				msg = commandRunner.execute(cmd);
+			} catch (Exception e) {
+				msg = "Failure on running command Eclipse: '"
+						+ e.getMessage() + "'";
+				e.printStackTrace();
 			}
+			
+			SerializeCommandEncoder encoder = new SerializeCommandEncoder();
+			ObjectOutput out = encoder.createEncoder(socket.getOutputStream());
+			if (msg == null) {
+				out.writeBoolean(false);
+			} else {
+				out.writeBoolean(true);
+				out.writeUTF(msg);
+			}
+			out.flush();
 		}
 		catch(final Exception e){
 			LOGGER.log(Level.SEVERE, "Command worker aborted.", e);

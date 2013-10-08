@@ -33,7 +33,7 @@ public class ExternalToolsCommandRunner extends AbstractAtomCommandRunner {
 	}
 	
 	@Override
-	protected void internalExecute(final Command cmd) throws Exception {
+	protected String internalExecute(final Command cmd) throws Exception {
 		final ExternalToolsCommand c = (ExternalToolsCommand) cmd;
 		
 		final ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
@@ -49,6 +49,8 @@ public class ExternalToolsCommandRunner extends AbstractAtomCommandRunner {
 			
 			break;
 		}
+		
+		return null;
 	}
 
 }

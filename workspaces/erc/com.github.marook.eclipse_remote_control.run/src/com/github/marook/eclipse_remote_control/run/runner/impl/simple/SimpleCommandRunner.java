@@ -27,6 +27,7 @@ import com.github.marook.eclipse_remote_control.run.runner.ICommandRunner;
 import com.github.marook.eclipse_remote_control.run.runner.impl.simple.atom.AbstractAtomCommandRunner;
 import com.github.marook.eclipse_remote_control.run.runner.impl.simple.atom.ExternalToolsCommandRunner;
 import com.github.marook.eclipse_remote_control.run.runner.impl.simple.atom.OpenFileCommandRunner;
+import com.github.marook.eclipse_remote_control.run.runner.impl.simple.atom.RemoteDebugCommandRunner;
 
 public class SimpleCommandRunner implements ICommandRunner {
 	
@@ -40,17 +41,18 @@ public class SimpleCommandRunner implements ICommandRunner {
 	static {
 		putAtomRunner(new OpenFileCommandRunner());
 		putAtomRunner(new ExternalToolsCommandRunner());
+		putAtomRunner(new RemoteDebugCommandRunner());
 	}
 
 	@Override
-	public void execute(final Command cmd) throws Exception {
+	public String execute(final Command cmd) throws Exception {
 		final ICommandRunner cr = ATOM_RUNNERS.get(cmd.getCommandId());
 		
 		if(cr == null){
 			// TODO log that we can't handle this command
 		}
 		
-		cr.execute(cmd);
+		return cr.execute(cmd);
 	}
 
 }

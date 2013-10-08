@@ -38,15 +38,15 @@ public abstract class AbstractAtomCommandRunner implements ICommandRunner {
 		return commandId;
 	}
 	
-	protected abstract void internalExecute(final Command cmd) throws Exception;
+	protected abstract String internalExecute(final Command cmd) throws Exception;
 
 	@Override
-	public void execute(final Command cmd) throws Exception {
+	public String execute(final Command cmd) throws Exception {
 		if(!commandId.equals(cmd.getCommandId())){
 			throw new IllegalArgumentException("Can't execute command of type " + cmd.getClass());
 		}
 		
-		internalExecute(cmd);
+		return internalExecute(cmd);
 	}
 
 }
